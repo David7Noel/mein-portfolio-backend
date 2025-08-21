@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib
@@ -12,13 +12,9 @@ load_dotenv()
 
 app = FastAPI()
 
-# Configure CORS to allow your frontend to communicate with the backend
-origins = [
-    "http://127.0.0.1:5500", 
-    "http://localhost:5500",
-    "null",
-    "https://www.davidkruska.dev"
-]
+# Temporäre CORS-Konfiguration zum Debuggen.
+# Erlaubt alle Domains. Dies ist NICHT für die Produktion empfohlen.
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
