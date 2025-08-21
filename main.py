@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib
@@ -12,8 +12,21 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORSMiddleware is still commented out as it caused a crash on Fly.io
-# We will handle CORS headers manually for the contact endpoint.
+# Sichere CORS-Konfiguration für die Produktion.
+# Erlaubt nur deine Domains und lokale Entwicklungsumgebungen.
+origins = [
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+    "https://*.davidkruska.dev" # Erlaubt davidkruska.dev und www.davidkruska.dev
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Pydantic model to validate the incoming form data
 class ContactForm(BaseModel):
@@ -22,31 +35,9 @@ class ContactForm(BaseModel):
     subject: str
     message: str
 
-# Helper function to get the correct origin
-def get_origin_header(request: Request):
-    origin = request.headers.get("origin")
-    if origin and "davidkruska.dev" in origin:
-        return origin
-    return "https://www.davidkruska.dev"
-
-# Handler for the OPTIONS preflight request
-@app.options("/api/send_email")
-async def send_email_options(response: Response, request: Request):
-    response.headers["Access-Control-Allow-Origin"] = get_origin_header(request)
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "POST"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    return ""
-
 # API endpoint to handle the form submission
 @app.post("/api/send_email")
-async def send_email(form: ContactForm, response: Response, request: Request):
-    # Manually set CORS headers to allow requests from your domains
-    response.headers["Access-Control-Allow-Origin"] = get_origin_header(request)
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    
+async def send_email(form: ContactForm):
     try:
         sender_email = os.getenv("SENDER_EMAIL")
         sender_password = os.getenv("SENDER_APP_PASSWORD")
