@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib
@@ -12,19 +12,17 @@ load_dotenv()
 
 app = FastAPI()
 
-# Sichere CORS-Konfiguration für die Produktion.
-# Erlaubt nur deine Domains und lokale Entwicklungsumgebungen.
-origins = [
-    origins = ["https://www.davidkruska.dev", "https://davidkruska.dev"]
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORSMiddleware is causing the app to crash on Fly.io
+# Temporarily comment it out and set headers manually for the endpoint
+# origins = ["https://www.davidkruska.dev", "https://davidkruska.dev"]
+#
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 # Pydantic model to validate the incoming form data
 class ContactForm(BaseModel):
@@ -35,7 +33,17 @@ class ContactForm(BaseModel):
 
 # API endpoint to handle the form submission
 @app.post("/api/send_email")
-async def send_email(form: ContactForm):
+async def send_email(form: ContactForm, response: Response):
+    # Manually set CORS headers to allow requests from your domains
+    response.headers["Access-Control-Allow-Origin"] = "https://www.davidkruska.dev"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    
+    # Check if the request came from the non-www version and set the header accordingly
+    if "https://davidkruska.dev" in response.headers.get("origin", ""):
+        response.headers["Access-Control-Allow-Origin"] = "https://davidkruska.dev"
+        
     try:
         sender_email = os.getenv("SENDER_EMAIL")
         sender_password = os.getenv("SENDER_APP_PASSWORD")
