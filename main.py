@@ -15,8 +15,7 @@ app = FastAPI()
 # Sichere CORS-Konfiguration für die Produktion.
 # Erlaubt nur deine Domains und lokale Entwicklungsumgebungen.
 origins = [
-    "https://www.davidkruska.dev",
-    "https://davidkruska.dev"
+    origins = ["https://www.davidkruska.dev", "https://davidkruska.dev"]
 ]
 
 app.add_middleware(
