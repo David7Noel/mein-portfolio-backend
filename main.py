@@ -4,6 +4,8 @@ from pydantic import BaseModel
 import smtplib
 import os
 from dotenv import load_dotenv
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 # Load environment variables from a .env file
 load_dotenv()
@@ -54,7 +56,7 @@ async def send_email(form: ContactForm):
 
         smtp_server = "smtp.gmail.com"
         port = 587
-
+        
         with smtplib.SMTP(smtp_server, port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
