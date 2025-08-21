@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import smtplib
@@ -12,17 +12,8 @@ load_dotenv()
 
 app = FastAPI()
 
-# CORSMiddleware is causing the app to crash on Fly.io
-# Temporarily comment it out and set headers manually for the endpoint
-# origins = ["https://www.davidkruska.dev", "https://davidkruska.dev"]
-#
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=origins,
-#     allow_credentials=True,
-#     allow_methods=["*"],
-#     allow_headers=["*"],
-# )
+# CORSMiddleware is still commented out as it caused a crash on Fly.io
+# We will handle CORS headers manually for the contact endpoint.
 
 # Pydantic model to validate the incoming form data
 class ContactForm(BaseModel):
@@ -31,19 +22,31 @@ class ContactForm(BaseModel):
     subject: str
     message: str
 
+# Helper function to get the correct origin
+def get_origin_header(request: Request):
+    origin = request.headers.get("origin")
+    if origin and "davidkruska.dev" in origin:
+        return origin
+    return "https://www.davidkruska.dev"
+
+# Handler for the OPTIONS preflight request
+@app.options("/api/send_email")
+async def send_email_options(response: Response, request: Request):
+    response.headers["Access-Control-Allow-Origin"] = get_origin_header(request)
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "POST"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    return ""
+
 # API endpoint to handle the form submission
 @app.post("/api/send_email")
-async def send_email(form: ContactForm, response: Response):
+async def send_email(form: ContactForm, response: Response, request: Request):
     # Manually set CORS headers to allow requests from your domains
-    response.headers["Access-Control-Allow-Origin"] = "https://www.davidkruska.dev"
+    response.headers["Access-Control-Allow-Origin"] = get_origin_header(request)
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = "*"
     response.headers["Access-Control-Allow-Headers"] = "*"
     
-    # Check if the request came from the non-www version and set the header accordingly
-    if "https://davidkruska.dev" in response.headers.get("origin", ""):
-        response.headers["Access-Control-Allow-Origin"] = "https://davidkruska.dev"
-        
     try:
         sender_email = os.getenv("SENDER_EMAIL")
         sender_password = os.getenv("SENDER_APP_PASSWORD")
