@@ -15,7 +15,7 @@ origins = [
     "http://127.0.0.1:5500", 
     "http://localhost:5500",
     "null",
-    "https://www.davidkruska.dev"  # YOUR CORRECT DOMAIN
+    "https://www.davidkruska.dev"
 ]
 
 app.add_middleware(
@@ -54,7 +54,7 @@ async def send_email(form: ContactForm):
 
         smtp_server = "smtp.gmail.com"
         port = 587
-        
+
         with smtplib.SMTP(smtp_server, port) as server:
             server.starttls()
             server.login(sender_email, sender_password)
