@@ -69,3 +69,5 @@ Wichtiger Hinweis: Bei der Verknüpfung des Repos mit Railway muss der GitHub-Ap
 
 📜 Lizenz
 Dieses Projekt steht unter der MIT-Lizenz.
+
+Aktualisiert am 23. August 2025
